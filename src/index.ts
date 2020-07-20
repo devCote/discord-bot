@@ -1,56 +1,94 @@
 import { Client } from 'discord.js';
-import * as config from './config.json';
 import dotenv from 'dotenv';
 import { greetings } from './Greetings';
-
-const client: Client = new Client();
+import * as helperFunc from './HelperFunctions';
+// import ejs from 'ejs';
+import express from 'express';
+import bodyparser from 'body-parser';
+import axios from 'axios';
+import cheerio from 'cheerio';
+/////////////////////////------------------------
+const app = express();
+const client = new Client();
 dotenv.config();
+app.use(bodyparser.urlencoded({ extended: true }));
+app.set('view engine', 'ejs');
+let txtToSend = [];
+const prefix = '!';
+let messageOBJ = {
+  channel: {
+    send(str: string) {},
+  },
+};
+////////////////////////--------------------------
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/index.html');
+});
+
+app.post('/', (req, res) => {
+  if (req.body.inputText) {
+    messageOBJ.channel.send(req.body.inputText);
+  }
+
+  if (txtToSend.length > 0) {
+    res.render('index', { texToSend: txtToSend[0] });
+  } else {
+    res.sendFile(__dirname + '/index.html');
+  }
+  txtToSend.shift();
+});
+
+let port: number | string = process.env.PORT;
+if (port == null || port == '') {
+  port = 8000;
+}
+app.listen(port);
 
 client.on('ready', () => {
   console.log(`Client is logged in as ${client.user!.tag} and ready!`);
 });
 
-const capitalize = (s: string) => {
-  if (typeof s !== 'string') return '';
-  return s.charAt(0).toUpperCase() + s.slice(1);
-};
-
-const generateNumber = (): number => {
-  const max = greetings.length;
-  const min = 0;
-  const randomNum = Math.random() * (max - min) + min;
-  return Math.round(randomNum);
-};
-
 client.on('message', (message) => {
-  console.log(message.content);
+  if (message.channel.id === '734071880490942524' && !message.author.bot) {
+    messageOBJ = message;
+    txtToSend.push(`${message.author.username}: ${message.content}`);
+  }
+  switch (message.content.toLowerCase()) {
+    case `${prefix}joke`:
+      fetch('https://sv443.net/jokeapi/v2/joke/Dark?type=single')
+        .then((res) => res.json())
+        .then((json) => {
+          message.channel.send(json.joke);
+        });
+      break;
+
+    case `${prefix}report`:
+      axios
+        .get('https://zkillboard.com/corporation/98359204/')
+        .then((respond) => {
+          const $ = cheerio.load(respond.data);
+          const lastDateZK = $('.no-stripe').first().text();
+          if (lastDateZK === helperFunc.dateToday()) {
+            message.channel.send('ОМГ сегодня есть сливы');
+          } else {
+            message.channel.send('Сегодня нету сливов, котики торжествуют!');
+          }
+        });
+      break;
+    default:
+      break;
+  }
 
   if (
-    message.content[0] === config.prefix &&
-    greetings.includes(message.content.toLowerCase().slice(1))
+    message.content[0] === prefix &&
+    greetings.includes(message.content.slice(1))
   ) {
-    // send back "Pong." to the channel the message was sent in
-    message.channel.send(capitalize(greetings[generateNumber()]));
+    message.channel.send(
+      helperFunc.capitalize(
+        greetings[helperFunc.generateNumber(greetings.length)]
+      )
+    );
   }
 });
-
-// client.on('guildCreate', (g) => {
-//   const channel = g.channels.cache.random();
-//   if (!channel) return;
-
-//   channel.setName('foo').then((updatedChannel) => {
-//     console.log(`New channel name: ${updatedChannel.name}`);
-//   });
-// });
-
-// client.on('messageReactionRemoveAll', async (message) => {
-//   console.log(
-//     `messageReactionRemoveAll - id: ${message.id} (${message.id.length})`
-//   );
-
-//   if (message.partial) message = await message.fetch();
-
-//   console.log(`messageReactionRemoveAll - content: ${message.content}`);
-// });
 
 client.login(process.env.TOKEN);
