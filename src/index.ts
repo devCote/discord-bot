@@ -27,7 +27,7 @@ app.get('/', (req, res) => {
 
 app.post('/', (req, res) => {
   if (req.body.inputText) {
-    messageOBJ.channel.send(req.body.inputText);
+    messageOBJ.channel.send(req.body.inputText.replace(/<\/?[^>]+(>|$)/g, ''));
   }
 
   if (txtToSend.length > 0) {
