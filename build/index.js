@@ -53,12 +53,17 @@ app.post('/', function (req, res) {
         messageOBJ.channel.send(req.body.inputText);
     }
     if (txtToSend.length > 0) {
-        res.render('index', { texToSend: txtToSend[0] });
+        if (txtToSend[0].toLowerCase().includes('!online')) {
+            res.render('index', { texToSend: txtToSend[0], color: 'green' });
+        }
+        else {
+            res.render('index', { texToSend: txtToSend[0], color: 'red' });
+        }
+        txtToSend.shift();
     }
     else {
         res.sendFile(__dirname + '/index.html');
     }
-    txtToSend.shift();
 });
 var port = process.env.PORT;
 if (port == null || port == '') {
@@ -71,7 +76,7 @@ client.on('ready', function () {
 client.on('message', function (message) {
     if (message.channel.id === '734071880490942524' && !message.author.bot) {
         messageOBJ = message;
-        txtToSend.push(message.author.username + ": " + message.content);
+        txtToSend.push(message.author.username + ": \"" + message.content + "\"");
     }
     switch (message.content.toLowerCase()) {
         case prefix + "joke":

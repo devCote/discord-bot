@@ -31,11 +31,16 @@ app.post('/', (req, res) => {
   }
 
   if (txtToSend.length > 0) {
-    res.render('index', { texToSend: txtToSend[0] });
+    if (txtToSend[0].toLowerCase().includes('!online')) {
+      res.render('index', { texToSend: txtToSend[0], color: 'green' });
+    } else {
+      res.render('index', { texToSend: txtToSend[0], color: 'red' });
+    }
+
+    txtToSend.shift();
   } else {
     res.sendFile(__dirname + '/index.html');
   }
-  txtToSend.shift();
 });
 
 let port: number | string = process.env.PORT;
@@ -51,7 +56,7 @@ client.on('ready', () => {
 client.on('message', (message) => {
   if (message.channel.id === '734071880490942524' && !message.author.bot) {
     messageOBJ = message;
-    txtToSend.push(`${message.author.username}: ${message.content}`);
+    txtToSend.push(`${message.author.username}: "${message.content}"`);
   }
   switch (message.content.toLowerCase()) {
     case `${prefix}joke`:

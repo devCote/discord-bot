@@ -3,6 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      .red {
+        color: red;
+      }
+      .green {
+        color: green;
+      }
+    </style>
     <title>Document</title>
   </head>
   <body>
@@ -17,6 +25,6 @@
         SUBMIT
       </button>
     </form>
-    <h1 style="color: crimson;" id="textToSend">&zwnj;<%= texToSend %></h1>
+    <h1 class="<%= color %>" id="textToSend">&zwnj;<%= texToSend %></h1>
   </body>
 </html>
