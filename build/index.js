@@ -50,7 +50,15 @@ app.get('/', function (req, res) {
 });
 app.post('/', function (req, res) {
     if (req.body.inputText) {
-        messageOBJ.channel.send(req.body.inputText);
+        var str = req.body.inputText.toString();
+        messageOBJ.channel.send(str.replace(/<[^>]*>/g, ''));
+        if (txtToSend && txtToSend[0].toLowerCase().includes('!online')) {
+            res.render('index', { texToSend: txtToSend[0], color: 'green' });
+        }
+        else {
+            res.render('index', { texToSend: txtToSend[0], color: 'red' });
+        }
+        return;
     }
     if (txtToSend.length > 0) {
         if (txtToSend[0].toLowerCase().includes('!online')) {

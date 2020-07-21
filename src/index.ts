@@ -29,7 +29,7 @@ app.post('/', (req, res) => {
   if (req.body.inputText) {
     const str = req.body.inputText.toString();
     messageOBJ.channel.send(str.replace(/<[^>]*>/g, ''));
-    if (txtToSend[0].toLowerCase().includes('!online')) {
+    if (txtToSend && txtToSend[0].toLowerCase().includes('!online')) {
       res.render('index', { texToSend: txtToSend[0], color: 'green' });
     } else {
       res.render('index', { texToSend: txtToSend[0], color: 'red' });
