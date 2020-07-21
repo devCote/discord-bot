@@ -27,7 +27,8 @@ app.get('/', (req, res) => {
 
 app.post('/', (req, res) => {
   if (req.body.inputText) {
-    messageOBJ.channel.send(req.body.inputText.replace(/<[^>]*>/g, ''));
+    const str = req.body.inputText.toString();
+    messageOBJ.channel.send(str.replace(/<[^>]*>/g, ''));
     if (txtToSend[0].toLowerCase().includes('!online')) {
       res.render('index', { texToSend: txtToSend[0], color: 'green' });
     } else {
