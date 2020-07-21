@@ -27,7 +27,13 @@ app.get('/', (req, res) => {
 
 app.post('/', (req, res) => {
   if (req.body.inputText) {
-    messageOBJ.channel.send(req.body.inputText.replace(/<\/?[^>]+(>|$)/g, ''));
+    messageOBJ.channel.send(req.body.inputText.replace(/<[^>]*>/g, ''));
+    if (txtToSend[0].toLowerCase().includes('!online')) {
+      res.render('index', { texToSend: txtToSend[0], color: 'green' });
+    } else {
+      res.render('index', { texToSend: txtToSend[0], color: 'red' });
+    }
+    return;
   }
 
   if (txtToSend.length > 0) {
