@@ -25,7 +25,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var discord_js_1 = require("discord.js");
 var dotenv_1 = __importDefault(require("dotenv"));
 var Greetings_1 = require("./Greetings");
-var helperFunc = __importStar(require("./HelperFunctions"));
+var myFunc = __importStar(require("./HelperFunctions"));
 // import ejs from 'ejs';
 var express_1 = __importDefault(require("express"));
 var body_parser_1 = __importDefault(require("body-parser"));
@@ -55,17 +55,23 @@ app.post('/', function (req, res) {
         if (txtToSend && txtToSend[0].toLowerCase().includes('!online')) {
             res.render('index', { texToSend: txtToSend[0], color: 'green' });
         }
-        else {
+        else if (txtToSend) {
             res.render('index', { texToSend: txtToSend[0], color: 'red' });
+        }
+        else {
+            res.sendFile(__dirname + '/index.html');
         }
         return;
     }
-    if (txtToSend.length > 0) {
-        if (txtToSend[0].toLowerCase().includes('!online')) {
+    if (txtToSend) {
+        if (myFunc.incFunc(txtToSend, '!online')) {
             res.render('index', { texToSend: txtToSend[0], color: 'green' });
         }
         else {
-            res.render('index', { texToSend: txtToSend[0], color: 'red' });
+            if (!myFunc.incFunc(txtToSend, '!report') ||
+                !myFunc.incFunc(txtToSend, '!joke')) {
+                res.render('index', { texToSend: txtToSend[0], color: 'red' });
+            }
         }
         txtToSend.shift();
     }
@@ -100,11 +106,54 @@ client.on('message', function (message) {
                 .then(function (respond) {
                 var $ = cheerio_1.default.load(respond.data);
                 var lastDateZK = $('.no-stripe').first().text();
-                if (lastDateZK === helperFunc.dateToday()) {
-                    message.channel.send('ОМГ сегодня есть сливы');
+                var today = myFunc.dateToday();
+                if (lastDateZK === today) {
+                    var killlist = $('#killlist').children().next().children();
+                    var allkills = killlist.next().text();
+                    var cut = allkills.search('2020');
+                    cut -= 11;
+                    allkills = allkills.slice(0, cut).replace(/\s/g, ' ');
+                    allkills = allkills.slice(2);
+                    var arr = allkills.split('    ');
+                    var killsToday = arr
+                        .filter(function (val) {
+                        if (!val)
+                            return false;
+                        return true;
+                    })
+                        .map(function (e) { return e; });
+                    var iskLost = killsToday
+                        .filter(function (val) {
+                        if (val.includes(':'))
+                            return true;
+                        return false;
+                    })
+                        .map(function (e) { return e.slice(6); });
+                    var killsNum = killsToday.length / 4;
+                    var count = 0;
+                    var kills = [{ iks: '', where: '', whom: '', who: '' }];
+                    for (var i = 0; i < killsNum; i++) {
+                        if (i === 0) {
+                            kills[0].iks = killsToday[count];
+                            kills[0].where = killsToday[count + 1];
+                            kills[0].whom = killsToday[count + 2];
+                            kills[0].who = killsToday[count + 3];
+                        }
+                        else {
+                            kills.push({
+                                iks: killsToday[count],
+                                where: killsToday[count + 1],
+                                whom: killsToday[count + 2],
+                                who: killsToday[count + 3],
+                            });
+                        }
+                        count += 4;
+                    }
+                    var idKill = myFunc.idFunc(killsNum, killlist);
+                    myFunc.logger(kills, iskLost, idKill, message);
                 }
                 else {
-                    message.channel.send('Сегодня нету сливов, котики торжествуют!');
+                    console.log('Сегодня нету сливов, котики торжествуют!');
                 }
             });
             break;
@@ -113,7 +162,18 @@ client.on('message', function (message) {
     }
     if (message.content[0] === prefix &&
         Greetings_1.greetings.includes(message.content.slice(1))) {
-        message.channel.send(helperFunc.capitalize(Greetings_1.greetings[helperFunc.generateNumber(Greetings_1.greetings.length)]));
+        message.channel.send(myFunc.capitalize(Greetings_1.greetings[myFunc.generateNumber(Greetings_1.greetings.length)]));
     }
 });
 client.login(process.env.TOKEN);
+// axios
+//         .get('https://zkillboard.com/corporation/98359204/')
+//         .then((respond) => {
+//           const $ = cheerio.load(respond.data);
+//           const lastDateZK = $('.no-stripe').first().text();
+//           if (lastDateZK === myFunc.dateToday()) {
+//             message.channel.send('ОМГ сегодня есть сливы');
+//           } else {
+//             message.channel.send('Сегодня нету сливов, котики торжествуют!');
+//           }
+//         });

@@ -1,7 +1,7 @@
 import { Client } from 'discord.js';
 import dotenv from 'dotenv';
 import { greetings } from './Greetings';
-import * as helperFunc from './HelperFunctions';
+import * as myFunc from './HelperFunctions';
 // import ejs from 'ejs';
 import express from 'express';
 import bodyparser from 'body-parser';
@@ -31,17 +31,24 @@ app.post('/', (req, res) => {
     messageOBJ.channel.send(str.replace(/<[^>]*>/g, ''));
     if (txtToSend && txtToSend[0].toLowerCase().includes('!online')) {
       res.render('index', { texToSend: txtToSend[0], color: 'green' });
-    } else {
+    } else if (txtToSend) {
       res.render('index', { texToSend: txtToSend[0], color: 'red' });
+    } else {
+      res.sendFile(__dirname + '/index.html');
     }
     return;
   }
 
-  if (txtToSend.length > 0) {
-    if (txtToSend[0].toLowerCase().includes('!online')) {
+  if (txtToSend) {
+    if (myFunc.incFunc(txtToSend, '!online')) {
       res.render('index', { texToSend: txtToSend[0], color: 'green' });
     } else {
-      res.render('index', { texToSend: txtToSend[0], color: 'red' });
+      if (
+        !myFunc.incFunc(txtToSend, '!report') ||
+        !myFunc.incFunc(txtToSend, '!joke')
+      ) {
+        res.render('index', { texToSend: txtToSend[0], color: 'red' });
+      }
     }
 
     txtToSend.shift();
@@ -80,10 +87,62 @@ client.on('message', (message) => {
         .then((respond) => {
           const $ = cheerio.load(respond.data);
           const lastDateZK = $('.no-stripe').first().text();
-          if (lastDateZK === helperFunc.dateToday()) {
-            message.channel.send('ОМГ сегодня есть сливы');
+          const today = myFunc.dateToday();
+          if (lastDateZK === today) {
+            const killlist = $('#killlist').children().next().children();
+            let allkills = killlist.next().text();
+            let cut = allkills.search('2020');
+            cut -= 11;
+            allkills = allkills.slice(0, cut).replace(/\s/g, ' ');
+            allkills = allkills.slice(2);
+            const arr = allkills.split('    ');
+            const killsToday = arr
+              .filter((val) => {
+                if (!val) return false;
+                return true;
+              })
+              .map((e) => e);
+            const iskLost = killsToday
+              .filter((val) => {
+                if (val.includes(':')) return true;
+                return false;
+              })
+              .map((e) => e.slice(6));
+            const killsNum = killsToday.length / 4;
+            let count = 0;
+
+            const kills: [
+              {
+                iks: string;
+                where: string;
+                whom: string;
+                who: string;
+              }
+            ] = [{ iks: '', where: '', whom: '', who: '' }];
+
+            for (let i = 0; i < killsNum; i++) {
+              if (i === 0) {
+                kills[0].iks = killsToday[count];
+                kills[0].where = killsToday[count + 1];
+                kills[0].whom = killsToday[count + 2];
+                kills[0].who = killsToday[count + 3];
+              } else {
+                kills.push({
+                  iks: killsToday[count],
+                  where: killsToday[count + 1],
+                  whom: killsToday[count + 2],
+                  who: killsToday[count + 3],
+                });
+              }
+
+              count += 4;
+            }
+
+            const idKill = myFunc.idFunc(killsNum, killlist);
+
+            myFunc.logger(kills, iskLost, idKill, message);
           } else {
-            message.channel.send('Сегодня нету сливов, котики торжествуют!');
+            console.log('Сегодня нету сливов, котики торжествуют!');
           }
         });
       break;
@@ -96,11 +155,21 @@ client.on('message', (message) => {
     greetings.includes(message.content.slice(1))
   ) {
     message.channel.send(
-      helperFunc.capitalize(
-        greetings[helperFunc.generateNumber(greetings.length)]
-      )
+      myFunc.capitalize(greetings[myFunc.generateNumber(greetings.length)])
     );
   }
 });
 
 client.login(process.env.TOKEN);
+
+// axios
+//         .get('https://zkillboard.com/corporation/98359204/')
+//         .then((respond) => {
+//           const $ = cheerio.load(respond.data);
+//           const lastDateZK = $('.no-stripe').first().text();
+//           if (lastDateZK === myFunc.dateToday()) {
+//             message.channel.send('ОМГ сегодня есть сливы');
+//           } else {
+//             message.channel.send('Сегодня нету сливов, котики торжествуют!');
+//           }
+//         });
