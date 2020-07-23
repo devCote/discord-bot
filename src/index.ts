@@ -5,10 +5,9 @@ import * as myFunc from './HelperFunctions';
 import ejs from 'ejs';
 import express from 'express';
 import bodyparser from 'body-parser';
-import axios from 'axios';
-import cheerio from 'cheerio';
-import puppet from 'puppeteer';
+
 import fetch from 'node-fetch';
+import { JSONObject } from 'puppeteer';
 /////////////////////////------------------------
 const app = express();
 const client = new Client();
@@ -79,101 +78,13 @@ client.on('message', (message) => {
       fetch('https://sv443.net/jokeapi/v2/joke/Dark?type=single')
         .then((res) => res.json())
         .then((json) => {
-          // console.log(json.joke);
-          (async () => {
-            const browser = await puppet.launch();
-
-            const page = await browser.newPage();
-            await page.goto(
-              'https://www.reverso.net/text_translation.aspx?lang=RU'
-            );
-
-            await page.type('#txtSource', json.joke);
-            await page.click('#lnkSearch');
-            await page.waitFor(2500);
-
-            const result = await page.evaluate(() => {
-              function copyText(selector: any) {
-                var copyText = document.querySelector(selector);
-                copyText.select();
-                document.execCommand('Copy');
-                return copyText.value;
-              }
-              return copyText('#txtTranslation');
-            });
-            // console.log(result);
-            message.channel.send(json.joke);
-            message.channel.send(result);
-
-            await browser.close();
-          })();
+          const result = myFunc.transFoo(json);
+          message.channel.send(`${json.joke}\n\n${result}`);
         });
       break;
 
     case `${prefix}report`:
-      axios
-        .get('https://zkillboard.com/corporation/98359204/')
-        .then((respond) => {
-          const $ = cheerio.load(respond.data);
-          const lastDateZK = $('.no-stripe').first().text();
-          const today = myFunc.dateToday();
-          if (lastDateZK === today) {
-            const killlist = $('#killlist').children().next().children();
-            let allkills = killlist.next().text();
-            let cut = allkills.search('2020');
-            cut -= 11;
-            allkills = allkills.slice(0, cut).replace(/\s/g, ' ');
-            allkills = allkills.slice(2);
-            const arr = allkills.split('    ');
-            const killsToday = arr
-              .filter((val) => {
-                if (!val) return false;
-                return true;
-              })
-              .map((e) => e);
-            const iskLost = killsToday
-              .filter((val) => {
-                if (val.includes(':')) return true;
-                return false;
-              })
-              .map((e) => e.slice(6));
-            const killsNum = killsToday.length / 4;
-            let count = 0;
-
-            const kills: [
-              {
-                iks: string;
-                where: string;
-                whom: string;
-                who: string;
-              }
-            ] = [{ iks: '', where: '', whom: '', who: '' }];
-
-            for (let i = 0; i < killsNum; i++) {
-              if (i === 0) {
-                kills[0].iks = killsToday[count];
-                kills[0].where = killsToday[count + 1];
-                kills[0].whom = killsToday[count + 2];
-                kills[0].who = killsToday[count + 3];
-              } else {
-                kills.push({
-                  iks: killsToday[count],
-                  where: killsToday[count + 1],
-                  whom: killsToday[count + 2],
-                  who: killsToday[count + 3],
-                });
-              }
-
-              count += 4;
-            }
-
-            const idKill = myFunc.idFunc(killsNum, killlist);
-
-            myFunc.logger(kills, iskLost, idKill, message);
-          } else {
-            console.log('Сегодня нету сливов, котики торжествуют!');
-          }
-        });
+      myFunc.reportFoo(message);
       break;
     default:
       break;
@@ -190,15 +101,3 @@ client.on('message', (message) => {
 });
 
 client.login(process.env.TOKEN);
-
-// axios
-//         .get('https://zkillboard.com/corporation/98359204/')
-//         .then((respond) => {
-//           const $ = cheerio.load(respond.data);
-//           const lastDateZK = $('.no-stripe').first().text();
-//           if (lastDateZK === myFunc.dateToday()) {
-//             message.channel.send('ОМГ сегодня есть сливы');
-//           } else {
-//             message.channel.send('Сегодня нету сливов, котики торжествуют!');
-//           }
-//         });

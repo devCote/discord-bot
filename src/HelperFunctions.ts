@@ -2,6 +2,9 @@ import { Message } from 'discord.js';
 import * as discord from 'discord.js';
 import { link } from 'fs';
 import { title } from 'process';
+import puppet from 'puppeteer';
+import axios from 'axios';
+import cheerio from 'cheerio';
 
 export const dateToday = (): string => {
   const date = new Date();
@@ -77,14 +80,6 @@ export const idFunc = (killNum: number, list: Cheerio): string[] => {
   }
 };
 
-class Field {
-  constructor(
-    public name: string,
-    public value: string,
-    public inline: boolean
-  ) {}
-}
-
 export const logger = (
   kills: any,
   iskLost: string[],
@@ -113,5 +108,92 @@ export const logger = (
     emb.setURL(link);
 
     message.channel.send(emb);
+  });
+};
+
+export const transFoo = async ({ joke }) => {
+  const browser = await puppet.launch();
+
+  const page = await browser.newPage();
+  await page.goto('https://www.reverso.net/text_translation.aspx?lang=RU');
+
+  await page.type('#txtSource', joke);
+  await page.click('#lnkSearch');
+  await page.waitFor(2500);
+
+  const result = await page.evaluate(() => {
+    function copyText(selector: any) {
+      var copyText = document.querySelector(selector);
+      copyText.select();
+      document.execCommand('Copy');
+      return copyText.value;
+    }
+    return copyText('#txtTranslation');
+  });
+  await browser.close();
+  return result;
+};
+
+export const reportFoo = (message): void => {
+  axios.get('https://zkillboard.com/corporation/98359204/').then((respond) => {
+    const $ = cheerio.load(respond.data);
+    const lastDateZK = $('.no-stripe').first().text();
+    const today = dateToday();
+    if (lastDateZK === today) {
+      const killlist = $('#killlist').children().next().children();
+      let allkills = killlist.next().text();
+      let cut = allkills.search('2020');
+      cut -= 11;
+      allkills = allkills.slice(0, cut).replace(/\s/g, ' ');
+      allkills = allkills.slice(2);
+      const arr = allkills.split('    ');
+      const killsToday = arr
+        .filter((val) => {
+          if (!val) return false;
+          return true;
+        })
+        .map((e) => e);
+      const iskLost = killsToday
+        .filter((val) => {
+          if (val.includes(':')) return true;
+          return false;
+        })
+        .map((e) => e.slice(6));
+      const killsNum = killsToday.length / 4;
+      let count = 0;
+
+      const kills: [
+        {
+          iks: string;
+          where: string;
+          whom: string;
+          who: string;
+        }
+      ] = [{ iks: '', where: '', whom: '', who: '' }];
+
+      for (let i = 0; i < killsNum; i++) {
+        if (i === 0) {
+          kills[0].iks = killsToday[count];
+          kills[0].where = killsToday[count + 1];
+          kills[0].whom = killsToday[count + 2];
+          kills[0].who = killsToday[count + 3];
+        } else {
+          kills.push({
+            iks: killsToday[count],
+            where: killsToday[count + 1],
+            whom: killsToday[count + 2],
+            who: killsToday[count + 3],
+          });
+        }
+
+        count += 4;
+      }
+
+      const idKill = idFunc(killsNum, killlist);
+
+      logger(kills, iskLost, idKill, message);
+    } else {
+      message.channel.send('Сегодня нету сливов, котики торжествуют!');
+    }
   });
 };
