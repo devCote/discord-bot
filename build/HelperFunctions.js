@@ -95,7 +95,6 @@ var Field = /** @class */ (function () {
 exports.logger = function (kills, iskLost, idKill, message) {
     var i = 0;
     var i2 = 0;
-    var pref = '```';
     kills.forEach(function (e) {
         var link = "https://zkillboard.com/kill/" + idKill[i2++] + "/";
         var emb = new discord.MessageEmbed();

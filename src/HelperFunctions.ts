@@ -93,7 +93,6 @@ export const logger = (
 ): void => {
   let i = 0;
   let i2 = 0;
-  const pref = '```';
 
   kills.forEach((e) => {
     let link = `https://zkillboard.com/kill/${idKill[i2++]}/`;

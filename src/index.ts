@@ -7,6 +7,8 @@ import express from 'express';
 import bodyparser from 'body-parser';
 import axios from 'axios';
 import cheerio from 'cheerio';
+import puppet from 'puppeteer';
+import fetch from 'node-fetch';
 /////////////////////////------------------------
 const app = express();
 const client = new Client();
@@ -77,7 +79,34 @@ client.on('message', (message) => {
       fetch('https://sv443.net/jokeapi/v2/joke/Dark?type=single')
         .then((res) => res.json())
         .then((json) => {
-          message.channel.send(json.joke);
+          // console.log(json.joke);
+          (async () => {
+            const browser = await puppet.launch();
+
+            const page = await browser.newPage();
+            await page.goto(
+              'https://www.reverso.net/text_translation.aspx?lang=RU'
+            );
+
+            await page.type('#txtSource', json.joke);
+            await page.click('#lnkSearch');
+            await page.waitFor(2500);
+
+            const result = await page.evaluate(() => {
+              function copyText(selector: any) {
+                var copyText = document.querySelector(selector);
+                copyText.select();
+                document.execCommand('Copy');
+                return copyText.value;
+              }
+              return copyText('#txtTranslation');
+            });
+            // console.log(result);
+            message.channel.send(json.joke);
+            message.channel.send(result);
+
+            await browser.close();
+          })();
         });
       break;
 
