@@ -2,7 +2,7 @@ import { Client } from 'discord.js';
 import dotenv from 'dotenv';
 import { greetings } from './Greetings';
 import * as myFunc from './HelperFunctions';
-// import ejs from 'ejs';
+import ejs from 'ejs';
 import express from 'express';
 import bodyparser from 'body-parser';
 import axios from 'axios';
