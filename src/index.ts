@@ -73,47 +73,38 @@ client.on('message', (message) => {
   if (message.channel.id === '734071880490942524' && !message.author.bot) {
     messageOBJ = message;
     txtToSend.push(`${message.author.username}: "${message.content}"`);
-  }
-  switch (message.content.toLowerCase()) {
-    case `${prefix}joke`:
-      fetch('https://sv443.net/jokeapi/v2/joke/Dark?type=single')
-        .then((res) => res.json())
-        .then(({ joke }) => {
-          (async () => {
-            const browser = await puppet.launch();
+  } else if ((message.content = `${prefix}joke`)) {
+    fetch('https://sv443.net/jokeapi/v2/joke/Dark?type=single')
+      .then((res) => res.json())
+      .then(({ joke }) => {
+        (async () => {
+          const browser = await puppet.launch();
 
-            const page = await browser.newPage();
-            await page.goto(
-              'https://www.reverso.net/text_translation.aspx?lang=RU'
-            );
+          const page = await browser.newPage();
+          await page.goto(
+            'https://www.reverso.net/text_translation.aspx?lang=RU'
+          );
 
-            await page.type('#txtSource', joke);
-            await page.click('#lnkSearch');
-            await page.waitFor(2500);
+          await page.type('#txtSource', joke);
+          await page.click('#lnkSearch');
+          await page.waitFor(2500);
 
-            const result = await page.evaluate(() => {
-              function copyText(selector: any) {
-                var copyText = document.querySelector(selector);
-                copyText.select();
-                document.execCommand('Copy');
-                return copyText.value;
-              }
-              return copyText('#txtTranslation');
-            });
-            await browser.close();
-            message.channel.send(`\n${joke}\n\n${result}`);
-          })();
-        });
-      break;
-
-    case `${prefix}report`:
-      myFunc.reportFoo(message);
-      break;
-    default:
-      break;
-  }
-
-  if (
+          const result = await page.evaluate(() => {
+            function copyText(selector: any) {
+              var copyText = document.querySelector(selector);
+              copyText.select();
+              document.execCommand('Copy');
+              return copyText.value;
+            }
+            return copyText('#txtTranslation');
+          });
+          await browser.close();
+          message.channel.send(`\n${joke}\n\n${result}`);
+        })();
+      });
+  } else if ((message.content = `${prefix}report`)) {
+    myFunc.reportFoo(message);
+  } else if (
     message.content[0] === prefix &&
     greetings.includes(message.content.slice(1))
   ) {
@@ -124,5 +115,3 @@ client.on('message', (message) => {
 });
 
 client.login(process.env.TOKEN);
-
-//dfsfsdfsdfds
