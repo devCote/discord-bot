@@ -62,11 +62,8 @@ var discord_js_1 = require("discord.js");
 var dotenv_1 = __importDefault(require("dotenv"));
 var Greetings_1 = require("./Greetings");
 var myFunc = __importStar(require("./HelperFunctions"));
-// import ejs from 'ejs';
 var express_1 = __importDefault(require("express"));
 var body_parser_1 = __importDefault(require("body-parser"));
-var axios_1 = __importDefault(require("axios"));
-var cheerio_1 = __importDefault(require("cheerio"));
 var puppeteer_1 = __importDefault(require("puppeteer"));
 var node_fetch_1 = __importDefault(require("node-fetch"));
 /////////////////////////------------------------
@@ -134,8 +131,8 @@ client.on('message', function (message) {
         case prefix + "joke":
             node_fetch_1.default('https://sv443.net/jokeapi/v2/joke/Dark?type=single')
                 .then(function (res) { return res.json(); })
-                .then(function (json) {
-                // console.log(json.joke);
+                .then(function (_a) {
+                var joke = _a.joke;
                 (function () { return __awaiter(void 0, void 0, void 0, function () {
                     var browser, page, result;
                     return __generator(this, function (_a) {
@@ -149,7 +146,7 @@ client.on('message', function (message) {
                                 return [4 /*yield*/, page.goto('https://www.reverso.net/text_translation.aspx?lang=RU')];
                             case 3:
                                 _a.sent();
-                                return [4 /*yield*/, page.type('#txtSource', json.joke)];
+                                return [4 /*yield*/, page.type('#txtSource', joke)];
                             case 4:
                                 _a.sent();
                                 return [4 /*yield*/, page.click('#lnkSearch')];
@@ -169,12 +166,10 @@ client.on('message', function (message) {
                                     })];
                             case 7:
                                 result = _a.sent();
-                                // console.log(result);
-                                message.channel.send(json.joke);
-                                message.channel.send(result);
                                 return [4 /*yield*/, browser.close()];
                             case 8:
                                 _a.sent();
+                                message.channel.send("\n" + joke + "\n\n" + result);
                                 return [2 /*return*/];
                         }
                     });
@@ -182,61 +177,7 @@ client.on('message', function (message) {
             });
             break;
         case prefix + "report":
-            axios_1.default
-                .get('https://zkillboard.com/corporation/98359204/')
-                .then(function (respond) {
-                var $ = cheerio_1.default.load(respond.data);
-                var lastDateZK = $('.no-stripe').first().text();
-                var today = myFunc.dateToday();
-                if (lastDateZK === today) {
-                    var killlist = $('#killlist').children().next().children();
-                    var allkills = killlist.next().text();
-                    var cut = allkills.search('2020');
-                    cut -= 11;
-                    allkills = allkills.slice(0, cut).replace(/\s/g, ' ');
-                    allkills = allkills.slice(2);
-                    var arr = allkills.split('    ');
-                    var killsToday = arr
-                        .filter(function (val) {
-                        if (!val)
-                            return false;
-                        return true;
-                    })
-                        .map(function (e) { return e; });
-                    var iskLost = killsToday
-                        .filter(function (val) {
-                        if (val.includes(':'))
-                            return true;
-                        return false;
-                    })
-                        .map(function (e) { return e.slice(6); });
-                    var killsNum = killsToday.length / 4;
-                    var count = 0;
-                    var kills = [{ iks: '', where: '', whom: '', who: '' }];
-                    for (var i = 0; i < killsNum; i++) {
-                        if (i === 0) {
-                            kills[0].iks = killsToday[count];
-                            kills[0].where = killsToday[count + 1];
-                            kills[0].whom = killsToday[count + 2];
-                            kills[0].who = killsToday[count + 3];
-                        }
-                        else {
-                            kills.push({
-                                iks: killsToday[count],
-                                where: killsToday[count + 1],
-                                whom: killsToday[count + 2],
-                                who: killsToday[count + 3],
-                            });
-                        }
-                        count += 4;
-                    }
-                    var idKill = myFunc.idFunc(killsNum, killlist);
-                    myFunc.logger(kills, iskLost, idKill, message);
-                }
-                else {
-                    console.log('Сегодня нету сливов, котики торжествуют!');
-                }
-            });
+            myFunc.reportFoo(message);
             break;
         default:
             break;
@@ -247,14 +188,3 @@ client.on('message', function (message) {
     }
 });
 client.login(process.env.TOKEN);
-// axios
-//         .get('https://zkillboard.com/corporation/98359204/')
-//         .then((respond) => {
-//           const $ = cheerio.load(respond.data);
-//           const lastDateZK = $('.no-stripe').first().text();
-//           if (lastDateZK === myFunc.dateToday()) {
-//             message.channel.send('ОМГ сегодня есть сливы');
-//           } else {
-//             message.channel.send('Сегодня нету сливов, котики торжествуют!');
-//           }
-//         });

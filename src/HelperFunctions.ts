@@ -1,8 +1,5 @@
 import { Message } from 'discord.js';
 import * as discord from 'discord.js';
-import { link } from 'fs';
-import { title } from 'process';
-import puppet from 'puppeteer';
 import axios from 'axios';
 import cheerio from 'cheerio';
 
@@ -109,29 +106,6 @@ export const logger = (
 
     message.channel.send(emb);
   });
-};
-
-export const transFoo = async ({ joke }) => {
-  const browser = await puppet.launch();
-
-  const page = await browser.newPage();
-  await page.goto('https://www.reverso.net/text_translation.aspx?lang=RU');
-
-  await page.type('#txtSource', joke);
-  await page.click('#lnkSearch');
-  await page.waitFor(2500);
-
-  const result = await page.evaluate(() => {
-    function copyText(selector: any) {
-      var copyText = document.querySelector(selector);
-      copyText.select();
-      document.execCommand('Copy');
-      return copyText.value;
-    }
-    return copyText('#txtTranslation');
-  });
-  await browser.close();
-  return result;
 };
 
 export const reportFoo = (message): void => {

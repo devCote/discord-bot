@@ -18,9 +18,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logger = exports.idFunc = exports.incFunc = exports.generateNumber = exports.capitalize = exports.dateToday = void 0;
+exports.reportFoo = exports.logger = exports.idFunc = exports.incFunc = exports.generateNumber = exports.capitalize = exports.dateToday = void 0;
 var discord = __importStar(require("discord.js"));
+var axios_1 = __importDefault(require("axios"));
+var cheerio_1 = __importDefault(require("cheerio"));
 exports.dateToday = function () {
     var date = new Date();
     var dateTimeFormat = new Intl.DateTimeFormat('en', {
@@ -84,14 +89,6 @@ exports.idFunc = function (killNum, list) {
             return null;
     }
 };
-var Field = /** @class */ (function () {
-    function Field(name, value, inline) {
-        this.name = name;
-        this.value = value;
-        this.inline = inline;
-    }
-    return Field;
-}());
 exports.logger = function (kills, iskLost, idKill, message) {
     var i = 0;
     var i2 = 0;
@@ -113,5 +110,60 @@ exports.logger = function (kills, iskLost, idKill, message) {
         emb.addField("\u041F\u043E\u0442\u0435\u0440\u044F", "" + iskLost[i++], false);
         emb.setURL(link);
         message.channel.send(emb);
+    });
+};
+exports.reportFoo = function (message) {
+    axios_1.default.get('https://zkillboard.com/corporation/98359204/').then(function (respond) {
+        var $ = cheerio_1.default.load(respond.data);
+        var lastDateZK = $('.no-stripe').first().text();
+        var today = exports.dateToday();
+        if (lastDateZK === today) {
+            var killlist = $('#killlist').children().next().children();
+            var allkills = killlist.next().text();
+            var cut = allkills.search('2020');
+            cut -= 11;
+            allkills = allkills.slice(0, cut).replace(/\s/g, ' ');
+            allkills = allkills.slice(2);
+            var arr = allkills.split('    ');
+            var killsToday = arr
+                .filter(function (val) {
+                if (!val)
+                    return false;
+                return true;
+            })
+                .map(function (e) { return e; });
+            var iskLost = killsToday
+                .filter(function (val) {
+                if (val.includes(':'))
+                    return true;
+                return false;
+            })
+                .map(function (e) { return e.slice(6); });
+            var killsNum = killsToday.length / 4;
+            var count = 0;
+            var kills = [{ iks: '', where: '', whom: '', who: '' }];
+            for (var i = 0; i < killsNum; i++) {
+                if (i === 0) {
+                    kills[0].iks = killsToday[count];
+                    kills[0].where = killsToday[count + 1];
+                    kills[0].whom = killsToday[count + 2];
+                    kills[0].who = killsToday[count + 3];
+                }
+                else {
+                    kills.push({
+                        iks: killsToday[count],
+                        where: killsToday[count + 1],
+                        whom: killsToday[count + 2],
+                        who: killsToday[count + 3],
+                    });
+                }
+                count += 4;
+            }
+            var idKill = exports.idFunc(killsNum, killlist);
+            exports.logger(kills, iskLost, idKill, message);
+        }
+        else {
+            message.channel.send('Сегодня нету сливов, котики торжествуют!');
+        }
     });
 };

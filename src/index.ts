@@ -2,12 +2,10 @@ import { Client } from 'discord.js';
 import dotenv from 'dotenv';
 import { greetings } from './Greetings';
 import * as myFunc from './HelperFunctions';
-import ejs from 'ejs';
 import express from 'express';
 import bodyparser from 'body-parser';
-
+import puppet from 'puppeteer';
 import fetch from 'node-fetch';
-import { JSONObject } from 'puppeteer';
 /////////////////////////------------------------
 const app = express();
 const client = new Client();
@@ -77,9 +75,31 @@ client.on('message', (message) => {
     case `${prefix}joke`:
       fetch('https://sv443.net/jokeapi/v2/joke/Dark?type=single')
         .then((res) => res.json())
-        .then((json) => {
-          const result = myFunc.transFoo(json);
-          message.channel.send(`${json.joke}\n\n${result}`);
+        .then(({ joke }) => {
+          (async () => {
+            const browser = await puppet.launch();
+
+            const page = await browser.newPage();
+            await page.goto(
+              'https://www.reverso.net/text_translation.aspx?lang=RU'
+            );
+
+            await page.type('#txtSource', joke);
+            await page.click('#lnkSearch');
+            await page.waitFor(2500);
+
+            const result = await page.evaluate(() => {
+              function copyText(selector: any) {
+                var copyText = document.querySelector(selector);
+                copyText.select();
+                document.execCommand('Copy');
+                return copyText.value;
+              }
+              return copyText('#txtTranslation');
+            });
+            await browser.close();
+            message.channel.send(`\n${joke}\n\n${result}`);
+          })();
         });
       break;
 
