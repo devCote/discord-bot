@@ -98,7 +98,7 @@ app.post('/', function (req, res) {
         }
         return;
     }
-    if (txtToSend) {
+    if (txtToSend.length > 0) {
         if (myFunc.incFunc(txtToSend, '!online')) {
             res.render('index', { texToSend: txtToSend[0], color: 'green' });
         }

@@ -6,6 +6,9 @@ import express from 'express';
 import bodyparser from 'body-parser';
 import puppet from 'puppeteer';
 import fetch from 'node-fetch';
+import * as discord from 'discord.js';
+import axios from 'axios';
+import cheerio from 'cheerio';
 /////////////////////////------------------------
 const app = express();
 const client = new Client();
@@ -38,7 +41,7 @@ app.post('/', (req, res) => {
     return;
   }
 
-  if (txtToSend) {
+  if (txtToSend.length > 0) {
     if (myFunc.incFunc(txtToSend, '!online')) {
       res.render('index', { texToSend: txtToSend[0], color: 'green' });
     } else {
