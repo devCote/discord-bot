@@ -5,10 +5,10 @@ import * as myFunc from './HelperFunctions';
 import express from 'express';
 import bodyparser from 'body-parser';
 import puppet from 'puppeteer';
-import fetch from 'node-fetch';
-import * as discord from 'discord.js';
-import axios from 'axios';
-import cheerio from 'cheerio';
+//import fetch from 'node-fetch';
+//import * as discord from 'discord.js';
+//import axios from 'axios';
+//import cheerio from 'cheerio';
 /////////////////////////------------------------
 const app = express();
 const client = new Client();
@@ -19,11 +19,11 @@ let txtToSend = [];
 const prefix = '!';
 let messageOBJ = {
   channel: {
-    send(str: string) {},
+    send(_str: string) {},
   },
 };
 ////////////////////////--------------------------
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
@@ -75,7 +75,7 @@ client.on('message', (message) => {
     txtToSend.push(`${message.author.username}: "${message.content}"`);
   } else if ((message.content = `${prefix}joke`)) {
     fetch('https://sv443.net/jokeapi/v2/joke/Dark?type=single')
-      .then((res) => res.json())
+      .then((res: any) => res.json())
       .then(({ joke }) => {
         (async () => {
           const browser = await puppet.launch();
@@ -88,7 +88,7 @@ client.on('message', (message) => {
           await page.type('#txtSource', joke);
           await page.click('#lnkSearch');
           await page.waitFor(2500);
-
+          document.querySelectorAll;
           const result = await page.evaluate(() => {
             function copyText(selector: any) {
               var copyText = document.querySelector(selector);

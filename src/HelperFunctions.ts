@@ -42,11 +42,11 @@ export const idFunc = (killNum: number, list: Cheerio): string[] => {
   function sl(str: string) {
     return str.slice(52, 60);
   }
-  let res1;
-  let res2;
-  let res3;
-  let res4;
-  let res5;
+  let res1: string;
+  let res2: string;
+  let res3: string;
+  let res4: string;
+  let res5: string;
   switch (killNum) {
     case 1:
       return [sl(slist.html())];
@@ -86,7 +86,7 @@ export const logger = (
   let i = 0;
   let i2 = 0;
 
-  kills.forEach((e) => {
+  kills.forEach((e: any) => {
     let link = `https://zkillboard.com/kill/${idKill[i2++]}/`;
     const emb = new discord.MessageEmbed();
     if (e.whom.includes('Real Enemy of Angel Cartel')) {
